@@ -1,3 +1,2 @@
-CREATE USER maurodatamapper WITH SUPERUSER PASSWORD 'MauroDataMapper1234';
-CREATE DATABASE maurodatamapper OWNER maurodatamapper;
-
+CREATE USER 'maurodatamapper' IDENTIFIED BY 'MauroDataMapper1234';
+CREATE DATABASE maurodatamapper;
