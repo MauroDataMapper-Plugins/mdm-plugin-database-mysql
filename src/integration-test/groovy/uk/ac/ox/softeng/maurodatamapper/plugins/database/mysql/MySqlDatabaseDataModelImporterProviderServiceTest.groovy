@@ -39,7 +39,7 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
 
     @Override
     int getDefaultDatabasePort() {
-        5432
+        3306
     }
 
     @Override

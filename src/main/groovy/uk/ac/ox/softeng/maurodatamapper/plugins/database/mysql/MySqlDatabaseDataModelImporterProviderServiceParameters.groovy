@@ -21,13 +21,13 @@ import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters
 
-import org.postgresql.ds.PGSimpleDataSource
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import groovy.util.logging.Slf4j
 
 @Slf4j
 // @CompileStatic
-class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<PGSimpleDataSource> {
+class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<MysqlDataSource> {
 
     @ImportParameterConfig(
         displayName = 'Database Schema(s)',
@@ -48,14 +48,13 @@ class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDa
     }
 
     @Override
-    PGSimpleDataSource getDataSource(String dbName) {
-        final PGSimpleDataSource dataSource = new PGSimpleDataSource().tap {
-            // Need to use setters here as they handle empty/null elements for us
-            setServerNames getDatabaseServerNames()
-            setPortNumbers getDatabasePortNumbers()
-            setDatabaseName dbName
+    MysqlDataSource getDataSource(String databaseName) {
+        final MysqlDataSource dataSource = new MysqlDataSource().tap {
+            setServerName databaseHost
+            setPort databasePort
+            setDatabaseName databaseName
             if (databaseSSL) {
-                setSsl true
+                setUseSSL true
                 setSslMode 'require'
             }
         }
@@ -75,14 +74,6 @@ class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDa
 
     @Override
     int getDefaultPort() {
-        5432
-    }
-
-    String[] getDatabaseServerNames() {
-        [databaseHost].toArray() as String[]
-    }
-
-    int[] getDatabasePortNumbers() {
-        [databasePort].toArray() as int[]
+        3306
     }
 }
