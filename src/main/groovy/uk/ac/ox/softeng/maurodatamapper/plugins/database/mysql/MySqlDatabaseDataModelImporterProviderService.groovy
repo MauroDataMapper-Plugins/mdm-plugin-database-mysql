@@ -57,35 +57,17 @@ class MySqlDatabaseDataModelImporterProviderService
     @Override
     String getIndexInformationQueryString() {
         '''
-        SELECT
-          table_name,
-          index_name,
-          unique_index,
-          primary_index,
-          clustered,
-          array_to_string(array_agg(column_name), ', ') AS column_names
-        FROM (
-               SELECT
-                 t.relname         AS table_name,
-                 i.relname         AS index_name,
-                 a.attname         AS column_name,
-                 ix.indisunique    AS unique_index,
-                 ix.indisprimary   AS primary_index,
-                 ix.indisclustered AS clustered,
-                 unnest(ix.indkey) AS unn,
-                 a.attnum
-               FROM pg_catalog.pg_index ix
-                 LEFT JOIN pg_catalog.pg_class t ON ix.indrelid = t.oid
-                 LEFT JOIN pg_catalog.pg_class i ON ix.indexrelid = i.oid
-                 LEFT JOIN pg_catalog.pg_attribute a ON (t.oid = a.attrelid AND a.attnum = ANY (ix.indkey))
-                 LEFT JOIN pg_catalog.pg_namespace ns ON t.relnamespace = ns.oid
-               WHERE ns.nspname = ?
-               ORDER BY
-                 t.relname,
-                 i.relname,
-                 generate_subscripts(ix.indkey, 1)) sb
-        WHERE unn = attnum
-        GROUP BY table_name, index_name, unique_index, primary_index, clustered;
+       SELECT TABLE_NAME,
+       INDEX_NAME,
+       not(NON_UNIQUE) as unique_index,
+       ( INDEX_NAME like 'primary') as primary_index,
+       ( INDEX_NAME like 'primary') as clustered,
+       GROUP_CONCAT(column_name ORDER BY seq_in_index) AS column_names
+        FROM
+            INFORMATION_SCHEMA.STATISTICS
+        WHERE
+            TABLE_SCHEMA = ?
+        GROUP BY 1,2,3,4
         '''.stripIndent()
     }
 
@@ -93,17 +75,15 @@ class MySqlDatabaseDataModelImporterProviderService
     String getForeignKeyInformationQueryString() {
         '''
         SELECT
-          tc.constraint_name,
-          tc.table_name,
-          kcu.column_name,
-          ccu.table_name  AS reference_table_name,
-          ccu.column_name AS reference_column_name
+          tc.constraint_name AS constraint_name,
+          tc.table_name AS table_name,
+          kcu.column_name AS column_name,
+          kcu.referenced_table_name  AS reference_table_name,
+          kcu.referenced_column_name AS reference_column_name
         FROM
           information_schema.table_constraints AS tc
           JOIN information_schema.key_column_usage AS kcu
             ON tc.constraint_name = kcu.constraint_name
-          JOIN information_schema.constraint_column_usage AS ccu
-            ON ccu.constraint_name = tc.constraint_name
         WHERE constraint_type = 'FOREIGN KEY' AND tc.constraint_schema = ?;
         '''.stripIndent()
     }
@@ -113,7 +93,7 @@ class MySqlDatabaseDataModelImporterProviderService
         '''
         SELECT *
         FROM information_schema.columns
-        WHERE table_schema NOT IN ('pg_catalog','information_schema');
+        WHERE table_schema NOT IN ('mysql','information_schema', 'performance_schema', 'sys');
         '''.stripIndent()
     }
 
