@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford
+ * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters
 
 import com.mysql.cj.jdbc.MysqlDataSource
-
 import groovy.util.logging.Slf4j
 
 @Slf4j
