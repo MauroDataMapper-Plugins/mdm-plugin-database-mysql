@@ -44,7 +44,7 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
     @Override
     MySqlDatabaseDataModelImporterProviderServiceParameters createDatabaseImportParameters() {
         new MySqlDatabaseDataModelImporterProviderServiceParameters().tap {
-            databaseNames = 'maurodatamapper_test'
+            databaseNames = 'core'
             databaseUsername = 'maurodatamapper'
             databasePassword = 'MauroDataMapper1234'
         }
@@ -53,7 +53,9 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
     @Test
     void testImportSimpleDatabase() {
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-            createDatabaseImportParameters(databaseHost, databasePort).tap {databaseNames = 'metadata_simple'})
+            createDatabaseImportParameters(databaseHost, databasePort)
+                .tap {databaseNames = 'metadata_simple'}
+        )
         assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
         dataModel.dataTypes.each {
             System.err.println(it.label)
@@ -74,9 +76,11 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
         assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.dataElements.size()
         assertEquals 'Metadata Number of metadata', 3, metadataTable.metadata.size()
 
-        metadataTable.metadata.each {System.err.println(it.namespace);
+        metadataTable.metadata.each {
+            System.err.println(it.namespace);
             System.err.println(it.key);
-            System.err.println(it.value);}
+            System.err.println(it.value);
+        }
 
         assertTrue 'MD All metadata values are valid', metadataTable.metadata.every {it.value && it.key != it.value}
 

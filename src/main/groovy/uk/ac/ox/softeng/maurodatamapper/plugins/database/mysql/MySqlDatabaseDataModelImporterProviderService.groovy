@@ -90,19 +90,16 @@ class MySqlDatabaseDataModelImporterProviderService
 
     @Override
     String getDatabaseStructureQueryString() {
-        '''
-        SELECT *
-        FROM information_schema.columns
-        WHERE table_schema NOT IN ('mysql','information_schema', 'performance_schema', 'sys');
-        '''.stripIndent()
+        // In MySQL database and schema names are synonymous so we need can't just query by database
+        null
     }
 
     @Override
     PreparedStatement prepareCoreStatement(Connection connection, MySqlDatabaseDataModelImporterProviderServiceParameters parameters) {
-        if (!parameters.schemaNames) return super.prepareCoreStatement(connection, parameters)
-        final List<String> names = parameters.schemaNames.split(',') as List<String>
+        // In MySQL database and schema names are synonymous so we need can't just query by database
+        final List<String> names = parameters.databaseNames.split(',') as List<String>
         final PreparedStatement statement = connection.prepareStatement(
-            """SELECT * FROM information_schema.columns WHERE table_schema IN (${names.collect {'?'}.join(',')});""")
+            "SELECT * FROM information_schema.columns WHERE table_schema IN (${names.collect {'?'}.join(',')});")
         names.eachWithIndex {String name, int i -> statement.setString(i + 1, name)}
         statement
     }

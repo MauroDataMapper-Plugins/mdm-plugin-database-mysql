@@ -17,8 +17,7 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql
 
-import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportGroupConfig
-import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig
+
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters
 
 import com.mysql.cj.jdbc.MysqlDataSource
@@ -27,24 +26,6 @@ import groovy.util.logging.Slf4j
 @Slf4j
 // @CompileStatic
 class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<MysqlDataSource> {
-
-    @ImportParameterConfig(
-        displayName = 'Database Schema(s)',
-        description = [
-            'A comma-separated list of the schema names to import.',
-            'If not supplied then all schemas other than "pg_catalog" and "information_schema" will be imported.'],
-        optional = true,
-        group = @ImportGroupConfig(
-            name = 'Database',
-            order = 1
-        ))
-    String schemaNames
-
-    @Override
-    void populateFromProperties(Properties properties) {
-        super.populateFromProperties properties
-        schemaNames = properties.getProperty('import.database.schemas')
-    }
 
     @Override
     MysqlDataSource getDataSource(String databaseName) {
