@@ -61,12 +61,15 @@ CREATE TABLE IF NOT EXISTS metadata (
     catalogue_item_id BINARY(16)   NOT NULL
         REFERENCES catalogue_item,
     last_updated      TIMESTAMP    NOT NULL,
-    namespace         TEXT         NOT NULL,
+    namespace         VARCHAR(255) NOT NULL,
     value             TEXT         NOT NULL,
     created_by_id     BINARY(16)   NOT NULL
         REFERENCES catalogue_user,
-    `key`             TEXT         NOT NULL
+    `key`             VARCHAR(255) NOT NULL
 );
+
+CREATE UNIQUE INDEX unique_item_id_namespace_key
+    ON metadata(catalogue_item_id, namespace, `key`);
 
 CREATE INDEX metadata_catalogue_item_idx
     ON metadata(catalogue_item_id);

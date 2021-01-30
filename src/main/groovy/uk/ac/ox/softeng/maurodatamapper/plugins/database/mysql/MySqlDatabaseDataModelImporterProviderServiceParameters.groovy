@@ -56,4 +56,9 @@ class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDa
     int getDefaultPort() {
         3306
     }
+
+    @Override
+    boolean shouldImportSchemasAsDataClasses() {
+        false
+    }
 }

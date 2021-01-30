@@ -17,11 +17,17 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql
 
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
 
 import java.sql.Connection
 import java.sql.PreparedStatement
+import java.sql.SQLException
 
 // @CompileStatic
 class MySqlDatabaseDataModelImporterProviderService
@@ -102,5 +108,71 @@ class MySqlDatabaseDataModelImporterProviderService
             "SELECT * FROM information_schema.columns WHERE table_schema IN (${names.collect {'?'}.join(',')});")
         names.eachWithIndex {String name, int i -> statement.setString(i + 1, name)}
         statement
+    }
+
+    @Override
+    void addIndexInformation(DataModel dataModel, Connection connection) throws ApiException, SQLException {
+        if (!indexInformationQueryString) return
+        final List<Map<String, Object>> results = executePreparedStatement(dataModel, connection, indexInformationQueryString)
+        results.each {Map<String, Object> row ->
+            final DataClass tableClass = dataModel.dataClasses.find {(it.label == row.table_name as String)}
+            if (!tableClass) {
+                log.warn 'Could not add {} as DataClass for table {} does not exist', row.index_name, row.table_name
+                return
+            }
+
+            String indexType = row.primary_index ? 'primary_index' : row.unique_index ? 'unique_index' : 'index'
+            indexType = row.clustered ? "clustered_${indexType}" : indexType
+            tableClass.addToMetadata(namespace, "${indexType}[${row.index_name}]", row.column_names as String, dataModel.createdBy)
+        }
+
+    }
+
+
+    @Override
+    void addForeignKeyInformation(DataModel dataModel, Connection connection) throws ApiException, SQLException {
+        if (!foreignKeyInformationQueryString) return
+        final List<Map<String, Object>> results = executePreparedStatement(dataModel, connection,
+                                                                           foreignKeyInformationQueryString)
+
+        results.each {Map<String, Object> row ->
+            final DataClass tableClass = dataModel.dataClasses.find {(it.label == row.table_name as String)}
+            final DataClass foreignTableClass = dataModel.dataClasses.find {DataClass dataClass -> dataClass.label == row.reference_table_name}
+            DataType dataType
+
+            if (foreignTableClass) {
+                dataType = referenceTypeService.findOrCreateDataTypeForDataModel(
+                    dataModel, "${foreignTableClass.label}Type", "Linked to DataElement [${row.reference_column_name}]",
+                    dataModel.createdBy, foreignTableClass)
+                dataModel.addToDataTypes dataType
+            } else {
+                dataType = primitiveTypeService.findOrCreateDataTypeForDataModel(
+                    dataModel, "${row.reference_table_name}Type",
+                    "Missing link to foreign key table [${row.reference_table_name}.${row.reference_column_name}]",
+                    dataModel.createdBy)
+            }
+
+            final DataElement columnElement = tableClass.findDataElement(row.column_name as String)
+            columnElement.dataType = dataType
+            columnElement.addToMetadata(
+                namespace, "foreign_key[${row.constraint_name}]", row.reference_column_name as String, dataModel.createdBy)
+        }
+
+    }
+
+    List<Map<String, Object>> executePreparedStatement(DataModel dataModel, Connection connection,
+                                                       String queryString) throws ApiException, SQLException {
+        List<Map<String, Object>> results = null
+        try {
+            final PreparedStatement preparedStatement = connection.prepareStatement(queryString)
+            preparedStatement.setString(1, dataModel.label)
+            results = executeStatement(preparedStatement)
+            preparedStatement.close()
+        } catch (SQLException e) {
+            if (e.message.contains('Invalid object name \'information_schema.table_constraints\'')) {
+                log.warn 'No table_constraints available for {}', dataModel.label
+            } else throw e
+        }
+        results
     }
 }

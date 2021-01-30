@@ -25,6 +25,7 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePlugin
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertTrue
 
 // @CompileStatic
@@ -63,57 +64,44 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
         assertEquals 'Number of columntypes/datatypes', 9, dataModel.dataTypes?.size()
         assertEquals 'Number of primitive types', 8, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 1, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
-        assertEquals 'Number of tables/dataclasses', 4, dataModel.dataClasses?.size()
-        assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
+        assertEquals 'Number of tables/dataclasses', 3, dataModel.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 3, dataModel.childDataClasses?.size()
 
-        final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 3, publicSchema.dataClasses?.size()
-
-        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final Set<DataClass> dataClasses = dataModel.dataClasses
 
         // Tables
         final DataClass metadataTable = dataClasses.find {it.label == 'metadata'}
         assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.dataElements.size()
-        assertEquals 'Metadata Number of metadata', 3, metadataTable.metadata.size()
-
-        metadataTable.metadata.each {
-            System.err.println(it.namespace);
-            System.err.println(it.key);
-            System.err.println(it.value);
-        }
+        assertEquals 'Metadata Number of metadata', 4, metadataTable.metadata.size()
 
         assertTrue 'MD All metadata values are valid', metadataTable.metadata.every {it.value && it.key != it.value}
 
-        //assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key.startsWith 'primary_key'}
-        //assertEquals 'MD Primary indexes', 1, metadataTable.metadata.count {it.key.startsWith 'primary_index'}
-        //assertEquals 'MD Unique indexes', 1, metadataTable.metadata.count {it.key.startsWith 'unique_index'}
-        //assertEquals 'MD Indexes', 2, metadataTable.metadata.count {it.key.startsWith 'index'}
+        assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key.startsWith 'clustered_primary_index'}
+        assertEquals 'MD Unique indexes', 1, metadataTable.metadata.count {it.key.startsWith 'unique_index'}
+        assertEquals 'MD Indexes', 2, metadataTable.metadata.count {it.key.startsWith 'index'}
 
         final Metadata multipleColIndex = metadataTable.metadata.find {it.key.contains 'unique_item_id_namespace_key'}
-        //assertNotNull 'Should have multi column index', multipleColIndex
-        //assertEquals 'Correct order of columns', 'catalogue_item_id, namespace, key', multipleColIndex.value
+        assertNotNull 'Should have multi column index', multipleColIndex
+        assertEquals 'Correct order of columns', 'catalogue_item_id,namespace,key', multipleColIndex.value
 
         final DataClass ciTable = dataClasses.find {it.label == 'catalogue_item'}
         assertEquals 'CI Number of columns/dataElements', 10, ciTable.dataElements.size()
-        assertEquals 'CI Number of metadata', 4, ciTable.metadata.size()
+        assertEquals 'CI Number of metadata', 3, ciTable.metadata.size()
 
         assertTrue 'CI All metadata values are valid', ciTable.metadata.every {it.value && it.key != it.value}
 
-        //assertEquals 'Primary key', 1, ciTable.metadata.count {it.key.startsWith 'primary_key'}
-        //assertEquals 'Primary indexes', 1, ciTable.metadata.count {it.key.startsWith 'primary_index'}
-        //assertEquals 'Indexes', 2, ciTable.metadata.count {it.key.startsWith 'index'}
+        assertEquals 'Primary indexes', 1, ciTable.metadata.count {it.key.startsWith 'clustered_primary_index'}
+        assertEquals 'Indexes', 2, ciTable.metadata.count {it.key.startsWith 'index'}
 
         final DataClass cuTable = dataClasses.find {it.label == 'catalogue_user'}
         assertEquals 'CU Number of columns/dataElements', 18, cuTable.dataElements.size()
-        //assertEquals 'CU Number of metadata', 5, cuTable.metadata.size()
+        assertEquals 'CU Number of metadata', 3, cuTable.metadata.size()
 
         assertTrue 'CU All metadata values are valid', cuTable.metadata.every {it.value && it.key != it.value}
 
-        //assertEquals 'Primary key', 1, cuTable.metadata.count {it.key.startsWith 'primary_key'}
-        //assertEquals 'Primary indexes', 1, cuTable.metadata.count {it.key.startsWith 'primary_index'}
-        //assertEquals 'Unique indexes', 1, cuTable.metadata.count {it.key.startsWith 'unique_index'}
-        //assertEquals 'Indexes', 1, cuTable.metadata.count {it.key.startsWith 'index'}
-        //assertEquals 'Unique Constraint', 1, cuTable.metadata.count {it.key.startsWith 'unique['}
+        assertEquals 'Primary indexes', 1, cuTable.metadata.count {it.key.startsWith 'clustered_primary_index'}
+        assertEquals 'Unique indexes', 1, cuTable.metadata.count {it.key.startsWith 'unique_index'}
+        assertEquals 'Indexes', 1, cuTable.metadata.count {it.key.startsWith 'index'}
 
         // Columns
         assertTrue 'Metadata all elements required', metadataTable.dataElements.every {it.minMultiplicity == 1}
