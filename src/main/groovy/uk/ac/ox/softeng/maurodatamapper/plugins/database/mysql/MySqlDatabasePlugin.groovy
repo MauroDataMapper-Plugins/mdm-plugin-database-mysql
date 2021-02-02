@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford
+ * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.template
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql
 
 import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
 
-class TemplatePlugin extends AbstractMauroDataMapperPlugin {
+class MySqlDatabasePlugin extends AbstractMauroDataMapperPlugin {
 
     @Override
     String getName() {
-        'Plugin : XXXXXXX'
+        'Plugin : Database - MySQL'
     }
 
     @Override
     Closure doWithSpring() {
         {->
-            // This closure will be passed to grails.spring.BeanBuilder
+            mySqlDatabaseDataModelImporterProviderService MySqlDatabaseDataModelImporterProviderService
+            mySqlDataTypeProvider MySqlDataTypeProvider
         }
     }
 }
