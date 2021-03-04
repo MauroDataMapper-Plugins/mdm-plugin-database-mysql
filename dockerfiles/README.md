@@ -9,9 +9,9 @@ $ docker build --tag=mysql-mdm:latest .
 ## Start the MySQL Docker Instance
 
 The following command will start up a default MySQL server instance.
---rm -d
+
 ```bash
-docker run  \
+docker run --rm -d \
  -e MYSQL_ROOT_PASSWORD=my-secret-pw \
  -p 3306:3306 \
  --name mysql-mdm \

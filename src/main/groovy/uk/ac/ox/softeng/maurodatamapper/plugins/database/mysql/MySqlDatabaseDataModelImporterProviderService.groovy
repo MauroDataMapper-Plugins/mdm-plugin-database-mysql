@@ -41,7 +41,7 @@ class MySqlDatabaseDataModelImporterProviderService
 
     @Override
     String getVersion() {
-        '1.0.0-SNAPSHOT'
+        getClass().getPackage().getSpecificationVersion() ?: 'SNAPSHOT'
     }
 
     @Override
