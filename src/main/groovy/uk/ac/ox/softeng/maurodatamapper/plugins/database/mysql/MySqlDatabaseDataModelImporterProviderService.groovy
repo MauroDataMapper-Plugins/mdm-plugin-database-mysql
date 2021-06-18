@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
+
+import groovy.json.JsonOutput
 
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -114,20 +116,25 @@ class MySqlDatabaseDataModelImporterProviderService
     void addIndexInformation(DataModel dataModel, Connection connection) throws ApiException, SQLException {
         if (!indexInformationQueryString) return
         final List<Map<String, Object>> results = executePreparedStatement(dataModel, connection, indexInformationQueryString)
-        results.each {Map<String, Object> row ->
-            final DataClass tableClass = dataModel.dataClasses.find {(it.label == row.table_name as String)}
+        results.groupBy {it.table_name}.each {tableName, rows ->
+            final DataClass tableClass = dataModel.dataClasses.find {(it.label == tableName as String)}
             if (!tableClass) {
-                log.warn 'Could not add {} as DataClass for table {} does not exist', row.index_name, row.table_name
+                log.warn 'Could not add indexes as DataClass for table {} does not exist', tableName
                 return
             }
 
-            String indexType = row.primary_index ? 'primary_index' : row.unique_index ? 'unique_index' : 'index'
-            indexType = row.clustered ? "clustered_${indexType}" : indexType
-            tableClass.addToMetadata(namespace, "${indexType}[${row.index_name}]", row.column_names as String, dataModel.createdBy)
+            List<Map> indexes = rows.collect {row ->
+                [name          : (row.index_name as String).trim(),
+                 columns       : (row.column_names as String).trim(),
+                 primaryIndex  : getBooleanValue(row.primary_index),
+                 uniqueIndex   : getBooleanValue(row.unique_index ),
+                 clusteredIndex: getBooleanValue(row.clustered),
+                ]
+            }
+
+            tableClass.addToMetadata(namespace, 'indexes', JsonOutput.prettyPrint(JsonOutput.toJson(indexes)), dataModel.createdBy)
         }
-
     }
-
 
     @Override
     void addForeignKeyInformation(DataModel dataModel, Connection connection) throws ApiException, SQLException {
@@ -154,8 +161,8 @@ class MySqlDatabaseDataModelImporterProviderService
 
             final DataElement columnElement = tableClass.findDataElement(row.column_name as String)
             columnElement.dataType = dataType
-            columnElement.addToMetadata(
-                namespace, "foreign_key[${row.constraint_name}]", row.reference_column_name as String, dataModel.createdBy)
+            columnElement.addToMetadata(namespace, "foreign_key_name", row.constraint_name as String, dataModel.createdBy)
+            columnElement.addToMetadata(namespace, "foreign_key_columns", row.reference_column_name as String, dataModel.createdBy)
         }
 
     }
