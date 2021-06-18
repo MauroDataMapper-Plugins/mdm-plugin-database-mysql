@@ -22,6 +22,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
 
+import groovy.json.JsonSlurper
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -58,9 +59,6 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
                 .tap {databaseNames = 'metadata_simple'}
         )
         assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
-        dataModel.dataTypes.each {
-            System.err.println(it.label)
-        }
         assertEquals 'Number of columntypes/datatypes', 9, dataModel.dataTypes?.size()
         assertEquals 'Number of primitive types', 8, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 1, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
@@ -72,17 +70,23 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
         // Tables
         final DataClass metadataTable = dataClasses.find {it.label == 'metadata'}
         assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.dataElements.size()
-        assertEquals 'Metadata Number of metadata', 4, metadataTable.metadata.size()
+        assertEquals 'Metadata Number of metadata', 3, metadataTable.metadata.size()
 
         assertTrue 'MD All metadata values are valid', metadataTable.metadata.every {it.value && it.key != it.value}
 
-        assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key.startsWith 'clustered_primary_index'}
-        assertEquals 'MD Unique indexes', 1, metadataTable.metadata.count {it.key.startsWith 'unique_index'}
-        assertEquals 'MD Indexes', 2, metadataTable.metadata.count {it.key.startsWith 'index'}
+        List<Map> indexesInfo = new JsonSlurper().parseText(metadataTable.metadata.find {it.key == 'indexes'}.value) as List<Map>
 
-        final Metadata multipleColIndex = metadataTable.metadata.find {it.key.contains 'unique_item_id_namespace_key'}
+        assertEquals('MD Index count', 4, indexesInfo.size())
+
+        assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key == 'primary_key_name'}
+        assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key == 'primary_key_columns'}
+        assertEquals 'MD Primary indexes', 1, indexesInfo.findAll {it.primaryIndex && it.clustered}.size()
+        assertEquals 'MD Unique indexes', 2, indexesInfo.findAll {it.uniqueIndex}.size()
+        assertEquals 'MD indexes', 2, indexesInfo.findAll {!it.uniqueIndex && !it.primaryIndex}.size()
+
+        final Map multipleColIndex =indexesInfo.find {it.name ==  'unique_item_id_namespace_key'}
         assertNotNull 'Should have multi column index', multipleColIndex
-        assertEquals 'Correct order of columns', 'catalogue_item_id,namespace,key', multipleColIndex.value
+        assertEquals 'Correct order of columns', 'catalogue_item_id, namespace, key', multipleColIndex.columns
 
         final DataClass ciTable = dataClasses.find {it.label == 'catalogue_item'}
         assertEquals 'CI Number of columns/dataElements', 10, ciTable.dataElements.size()
@@ -90,18 +94,32 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
 
         assertTrue 'CI All metadata values are valid', ciTable.metadata.every {it.value && it.key != it.value}
 
-        assertEquals 'Primary indexes', 1, ciTable.metadata.count {it.key.startsWith 'clustered_primary_index'}
-        assertEquals 'Indexes', 2, ciTable.metadata.count {it.key.startsWith 'index'}
+        indexesInfo = new JsonSlurper().parseText(ciTable.metadata.find {it.key == 'indexes'}.value) as List<Map>
+
+        assertEquals('CI Index count', 3, indexesInfo.size())
+
+        assertEquals 'CI Primary key', 1, ciTable.metadata.count {it.key == 'primary_key_name'}
+        assertEquals 'CI Primary key', 1, ciTable.metadata.count {it.key == 'primary_key_columns'}
+        assertEquals 'CI Primary indexes', 1, indexesInfo.findAll {it.primaryIndex && it.clustered}.size()
+        assertEquals 'CI indexes', 2, indexesInfo.findAll {!it.uniqueIndex && !it.primaryIndex}.size()
 
         final DataClass cuTable = dataClasses.find {it.label == 'catalogue_user'}
         assertEquals 'CU Number of columns/dataElements', 18, cuTable.dataElements.size()
-        assertEquals 'CU Number of metadata', 3, cuTable.metadata.size()
+        assertEquals 'CU Number of metadata', 5, cuTable.metadata.size()
 
         assertTrue 'CU All metadata values are valid', cuTable.metadata.every {it.value && it.key != it.value}
 
-        assertEquals 'Primary indexes', 1, cuTable.metadata.count {it.key.startsWith 'clustered_primary_index'}
-        assertEquals 'Unique indexes', 1, cuTable.metadata.count {it.key.startsWith 'unique_index'}
-        assertEquals 'Indexes', 1, cuTable.metadata.count {it.key.startsWith 'index'}
+        indexesInfo = new JsonSlurper().parseText(cuTable.metadata.find {it.key == 'indexes'}.value) as List<Map>
+
+        assertEquals('CU Index count', 3, indexesInfo.size())
+
+        assertEquals 'CU Primary key', 1, cuTable.metadata.count {it.key == 'primary_key_name'}
+        assertEquals 'CU Primary key', 1, cuTable.metadata.count {it.key == 'primary_key_columns'}
+        assertEquals 'CI Primary indexes', 1, indexesInfo.findAll {it.primaryIndex && it.clustered}.size()
+        assertEquals 'CI Unique indexes', 2, indexesInfo.findAll {it.uniqueIndex}.size()
+        assertEquals 'CI indexes', 1, indexesInfo.findAll {!it.uniqueIndex && !it.primaryIndex}.size()
+        assertEquals 'CU constraint', 1, cuTable.metadata.count {it.key == 'unique_name'}
+        assertEquals 'CU constraint', 1, cuTable.metadata.count {it.key == 'unique_columns'}
 
         // Columns
         assertTrue 'Metadata all elements required', metadataTable.dataElements.every {it.minMultiplicity == 1}
