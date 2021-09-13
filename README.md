@@ -40,3 +40,11 @@ dependencies {
     runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-mysql:3.0.0'
 }
 ```
+
+## Development
+
+To run tests:
+```./gradlew --build-cache integrationTest```
+
+With debug:
+```./gradlew --build-cache integrationTest --debug-jvm```  
