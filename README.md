@@ -37,24 +37,11 @@ In the `dependencies.gradle` file add:
 
 ```groovy
 dependencies {
-    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-mysql:3.0.0'
+    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-mysql:4.0.0'
 }
 ```
 
 ## Development
-
-When making changes to this plugin you may also need to make changes to ```mdm-plugin-database```. To work locally on both projects
-you can add e.g. the following as the first entry of settings.gradle in this project:
-
-```
-pluginManagement {
-    includeBuild '../mdm-plugin-database'
-}
-
-```
-(The above assumes that both this project and ```mdm-plugin-database``` are located in the same directory).
-
-If using Intellij, go to Preferences > Build Tools and choose to reload the project after Any changes.
 
 To run tests:
 ```./gradlew --build-cache integrationTest```
