@@ -37,7 +37,7 @@ In the `dependencies.gradle` file add:
 
 ```groovy
 dependencies {
-    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-mysql:4.0.0'
+    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-mysql:3.0.0'
 }
 ```
 
