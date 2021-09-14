@@ -17,12 +17,13 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql
 
-import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataTypeService
+
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvider
 import uk.ac.ox.softeng.maurodatamapper.datamodel.rest.transport.DefaultDataType
 
 // @CompileStatic
-class MySqlDataTypeProvider extends DataTypeService {
+class MySqlDataTypeProvider implements DefaultDataTypeProvider {
 
     @Override
     String getDisplayName() {
@@ -78,5 +79,10 @@ class MySqlDataTypeProvider extends DataTypeService {
          [label: 'uuid', description: 'universally unique identifier'],
          [label: 'xml', description: 'XML data'],
         ].collect {Map<String, String> properties -> new DefaultDataType(new PrimitiveType(properties))}
+    }
+
+    @Override
+    String getVersion() {
+        getClass().getPackage().getSpecificationVersion() ?: 'SNAPSHOT'
     }
 }
