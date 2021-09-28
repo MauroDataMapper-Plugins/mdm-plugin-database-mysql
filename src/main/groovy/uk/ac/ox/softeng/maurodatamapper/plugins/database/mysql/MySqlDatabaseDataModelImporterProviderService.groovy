@@ -28,6 +28,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.AbstractIntervalHelper
 
 import groovy.json.JsonOutput
@@ -197,16 +198,16 @@ class MySqlDatabaseDataModelImporterProviderService
      * @param connection
      */
     @Override
-    void updateDataModelWithEnumerations(User user, int maxEnumerations, DataModel dataModel, Connection connection) {
+    void updateDataModelWithEnumerations(User user, SamplingStrategy samplingStrategy, int maxEnumerations, DataModel dataModel, Connection connection) {
         dataModel.childDataClasses.each { DataClass tableClass ->
             tableClass.dataElements.each { DataElement de ->
                 DataType primitiveType = de.dataType
                 if (isColumnPossibleEnumeration(primitiveType)) {
-                    int countDistinct = getCountDistinctColumnValues(connection, de.label, tableClass.label)
+                    int countDistinct = getCountDistinctColumnValues(connection, samplingStrategy, de.label, tableClass.label)
                     if (countDistinct > 0 && countDistinct <= maxEnumerations) {
                         EnumerationType enumerationType = enumerationTypeService.findOrCreateDataTypeForDataModel(dataModel, de.label, de.label, user)
 
-                        final List<Map<String, Object>> results = getDistinctColumnValues(connection, de.label, tableClass.label)
+                        final List<Map<String, Object>> results = getDistinctColumnValues(connection, samplingStrategy, de.label, tableClass.label)
 
                         replacePrimitiveTypeWithEnumerationType(dataModel, de, primitiveType, enumerationType, results)
                     }
@@ -221,18 +222,18 @@ class MySqlDatabaseDataModelImporterProviderService
      * @param dataModel
      * @param connection
      */
-    void updateDataModelWithSummaryMetadata(User user, DataModel dataModel, Connection connection) {
+    void updateDataModelWithSummaryMetadata(User user, SamplingStrategy samplingStrategy, DataModel dataModel, Connection connection) {
         dataModel.childDataClasses.each { DataClass tableClass ->
             tableClass.dataElements.each { DataElement de ->
                 DataType dt = de.dataType
                 if (isColumnForDateSummary(dt) || isColumnForDecimalSummary(dt) || isColumnForIntegerSummary(dt)) {
-                    Pair minMax = getMinMaxColumnValues(connection, de.label, tableClass.label)
+                    Pair minMax = getMinMaxColumnValues(connection, samplingStrategy, de.label, tableClass.label)
 
                     //aValue is the MIN, bValue is the MAX. If they are not null then calculate the range etc...
                     if (!(minMax.aValue == null) && !(minMax.bValue == null)) {
                         AbstractIntervalHelper intervalHelper = getIntervalHelper(dt, minMax)
 
-                        Map<String, Integer> valueDistribution = getColumnRangeDistribution(connection, dt, intervalHelper, de.label, tableClass.label)
+                        Map<String, Integer> valueDistribution = getColumnRangeDistribution(connection, samplingStrategy, dt, intervalHelper, de.label, tableClass.label)
                         if (valueDistribution) {
                             SummaryMetadata summaryMetadata = SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, 'Value Distribution', valueDistribution)
                             de.addToSummaryMetadata(summaryMetadata);
