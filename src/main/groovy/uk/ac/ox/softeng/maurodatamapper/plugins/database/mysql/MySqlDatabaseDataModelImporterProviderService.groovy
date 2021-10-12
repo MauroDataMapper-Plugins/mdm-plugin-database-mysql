@@ -34,6 +34,7 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.Abstrac
 import groovy.json.JsonOutput
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.SummaryMetadataHelper
 import uk.ac.ox.softeng.maurodatamapper.security.User
+import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -190,58 +191,86 @@ class MySqlDatabaseDataModelImporterProviderService
         dataType.domainType == 'PrimitiveType' && ["CHAR", "VARCHAR"].contains(dataType.label.toUpperCase())
     }
 
-    /**
-     * Override the base method because for MySQL we don't have the schemaClass
-     * @param user
-     * @param maxEnumerations
-     * @param dataModel
-     * @param connection
-     */
     @Override
-    void updateDataModelWithEnumerations(User user, SamplingStrategy samplingStrategy, int maxEnumerations, DataModel dataModel, Connection connection) {
+    void updateDataModelWithEnumerationsAndSummaryMetadata(User user, MySqlDatabaseDataModelImporterProviderServiceParameters parameters, DataModel dataModel, Connection connection) {
+        log.info('Starting enumeration and summary metedata detection')
+        long startTime = System.currentTimeMillis()
         dataModel.childDataClasses.each { DataClass tableClass ->
-            tableClass.dataElements.each { DataElement de ->
-                DataType primitiveType = de.dataType
-                if (isColumnPossibleEnumeration(primitiveType)) {
-                    int countDistinct = getCountDistinctColumnValues(connection, samplingStrategy, de.label, tableClass.label)
-                    if (countDistinct > 0 && countDistinct <= maxEnumerations) {
-                        EnumerationType enumerationType = enumerationTypeService.findOrCreateDataTypeForDataModel(dataModel, de.label, de.label, user)
+                SamplingStrategy samplingStrategy = getSamplingStrategy(parameters)
 
-                        final List<Map<String, Object>> results = getDistinctColumnValues(connection, samplingStrategy, de.label, tableClass.label)
+                if (!samplingStrategy.canSample() && samplingStrategy.approxCount > samplingStrategy.threshold) {
+                    log.info("Not calculating enumerations or summary metadata for ${samplingStrategy.tableType} ${tableClass.label} with approx rowcount ${samplingStrategy.approxCount} and threshold ${samplingStrategy.threshold}")
+                } else {
+                    tableClass.dataElements.each { DataElement de ->
+                        DataType dt = de.dataType
 
-                        replacePrimitiveTypeWithEnumerationType(dataModel, de, primitiveType, enumerationType, results)
-                    }
-                }
-            }
-        }
-    }
+                        //Enumeration detection
+                        if (parameters.detectEnumerations && isColumnPossibleEnumeration(dt)) {
+                            int countDistinct = getCountDistinctColumnValues(connection, samplingStrategy, de.label, tableClass.label)
+                            if (countDistinct > 0 && countDistinct <= (parameters.maxEnumerations ?: MAX_ENUMERATIONS)) {
+                                EnumerationType enumerationType = enumerationTypeService.findOrCreateDataTypeForDataModel(dataModel, de.label, de.label, user)
 
-    /**
-     * Compute a value distribution for relevant columns and store as summary metadata.
-     * @param user
-     * @param dataModel
-     * @param connection
-     */
-    void updateDataModelWithSummaryMetadata(User user, SamplingStrategy samplingStrategy, DataModel dataModel, Connection connection) {
-        dataModel.childDataClasses.each { DataClass tableClass ->
-            tableClass.dataElements.each { DataElement de ->
-                DataType dt = de.dataType
-                if (isColumnForDateSummary(dt) || isColumnForDecimalSummary(dt) || isColumnForIntegerSummary(dt)) {
-                    Pair minMax = getMinMaxColumnValues(connection, samplingStrategy, de.label, tableClass.label)
+                                final List<Map<String, Object>> results = getDistinctColumnValues(connection, samplingStrategy, de.label, tableClass.label)
 
-                    //aValue is the MIN, bValue is the MAX. If they are not null then calculate the range etc...
-                    if (!(minMax.aValue == null) && !(minMax.bValue == null)) {
-                        AbstractIntervalHelper intervalHelper = getIntervalHelper(dt, minMax)
+                                replacePrimitiveTypeWithEnumerationType(dataModel, de, dt, enumerationType, results)
+                            }
 
-                        Map<String, Integer> valueDistribution = getColumnRangeDistribution(connection, samplingStrategy, dt, intervalHelper, de.label, tableClass.label)
-                        if (valueDistribution) {
-                            SummaryMetadata summaryMetadata = SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, 'Value Distribution', valueDistribution)
-                            de.addToSummaryMetadata(summaryMetadata);
+                            if (parameters.calculateSummaryMetadata) {
+                                //Count enumeration values
+                                Map<String, Long> enumerationValueDistribution = getEnumerationValueDistribution(connection, samplingStrategy, de.label, tableClass.label)
+                                if (enumerationValueDistribution) {
+                                    String description = 'Enumeration Value Distribution'
+                                    if (samplingStrategy.useSampling()) {
+                                        description = "Estimated Enumeration Value Distribution (calculated by sampling ${samplingStrategy.percentage}% of rows)"
+                                    }
+                                    SummaryMetadata enumerationSummaryMetadata = SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, description, enumerationValueDistribution)
+                                    de.addToSummaryMetadata(enumerationSummaryMetadata);
+                                }
+                            }
+                        }
+
+                        //Summary metadata on dates and numbers
+                        if (parameters.calculateSummaryMetadata && (isColumnForDateSummary(dt) || isColumnForDecimalSummary(dt) || isColumnForIntegerSummary(dt) || isColumnForLongSummary(dt))) {
+                            Pair minMax = getMinMaxColumnValues(connection, samplingStrategy, de.label, tableClass.label)
+
+                            //aValue is the MIN, bValue is the MAX. If they are not null then calculate the range etc...
+                            if (!(minMax.aValue == null) && !(minMax.bValue == null)) {
+                                AbstractIntervalHelper intervalHelper = getIntervalHelper(dt, minMax)
+
+                                Map<String, Long> valueDistribution = getColumnRangeDistribution(connection, samplingStrategy, dt, intervalHelper, de.label, tableClass.label)
+                                if (valueDistribution) {
+                                    String description = 'Value Distribution';
+                                    if (samplingStrategy.useSampling()) {
+                                        description = "Estimated Value Distribution (calculated by sampling ${samplingStrategy.percentage}% of rows)"
+                                    }
+                                    SummaryMetadata summaryMetadata = SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, description, valueDistribution)
+                                    de.addToSummaryMetadata(summaryMetadata);
+                                }
+                            }
                         }
                     }
                 }
-            }
         }
+
+        log.info('Finished enumeration and summary metadata detection in {}', Utils.timeTaken(startTime))
+    }
+
+    @Override
+    String enumerationValueDistributionQueryString(SamplingStrategy samplingStrategy,
+                                                   String columnName,
+                                                   String tableName,
+                                                   String schemaName) {
+
+        String sql = """
+        SELECT ${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} AS enumeration_value,
+        COUNT(${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}) AS enumeration_count
+        FROM ${escapeIdentifier(tableName)} 
+        ${samplingStrategy.samplingClause()}
+        GROUP BY ${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}
+        ORDER BY ${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}
+        """
+
+        sql.stripIndent()
     }
 
     @Override
@@ -256,7 +285,12 @@ class MySqlDatabaseDataModelImporterProviderService
 
     @Override
     boolean isColumnForIntegerSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["INTEGER", "INT", "SMALLINT", "TINYINT", "MEDIUMINT", "BIGINT"].contains(dataType.label.toUpperCase())
+        dataType.domainType == 'PrimitiveType' && ["INTEGER", "INT", "SMALLINT", "TINYINT", "MEDIUMINT"].contains(dataType.label.toUpperCase())
+    }
+
+    @Override
+    boolean isColumnForLongSummary(DataType dataType) {
+        dataType.domainType == 'PrimitiveType' && ["BIGINT"].contains(dataType.label.toUpperCase())
     }
 
     @Override
