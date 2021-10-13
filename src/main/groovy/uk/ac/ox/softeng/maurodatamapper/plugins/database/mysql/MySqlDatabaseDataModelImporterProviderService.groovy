@@ -263,7 +263,7 @@ class MySqlDatabaseDataModelImporterProviderService
 
         String sql = """
         SELECT ${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} AS enumeration_value,
-        COUNT(${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}) AS enumeration_count
+        COUNT(*) AS enumeration_count
         FROM ${escapeIdentifier(tableName)} 
         ${samplingStrategy.samplingClause()}
         GROUP BY ${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}
