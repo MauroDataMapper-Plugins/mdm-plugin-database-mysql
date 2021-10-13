@@ -313,5 +313,29 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
                 '{"27/08/2020 - 28/08/2020":4,"28/08/2020 - 29/08/2020":24,"29/08/2020 - 30/08/2020":24,"30/08/2020 - 31/08/2020":24,"31/08/2020 - 01/09/2020":24,"01/09/2020 - 02/09/2020":24,"02/09/2020 - 03/09/2020":24,"03/09/2020 - 04/09/2020":24,"04/09/2020 - 05/09/2020":24,"05/09/2020 - 06/09/2020":5}',
                 sample_timestamp.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
+        checkOrganisationSummaryMetadata(dataModel)
+
+    }
+
+    private void checkOrganisationSummaryMetadata(DataModel dataModel) {
+        final Set<DataClass> dataClasses = dataModel.dataClasses
+        final DataClass organisationTable = dataClasses.find {it.label == 'organisation'}
+
+        //Map of column name to expected summary metadata description:reportValue. Expect exact counts.
+        Map<String, Map<String, String>> expectedColumns = [
+                "org_code": ['Enumeration Value Distribution':'{"CODER":2,"CODEX":19,"CODEY":9,"CODEZ":11}'],
+                "org_type": ['Enumeration Value Distribution':'{"TYPEA":17,"TYPEB":22,"TYPEC":2}'],
+                "org_char": ['Enumeration Value Distribution':'{"CHAR1":7,"CHAR2":13,"CHAR3":20}']
+        ]
+
+        expectedColumns.each {columnName, expectedReport ->
+            DataElement de = organisationTable.dataElements.find{it.label == columnName}
+            assertEquals 'One summaryMetadata', expectedReport.size(), de.summaryMetadata.size()
+
+            expectedReport.each {expectedReportDescription, expectedReportValue ->
+                assertEquals "Description of summary metadatdata for ${columnName}", expectedReportDescription, de.summaryMetadata[0].description
+                assertEquals "Value of summary metadatdata for ${columnName}", expectedReportValue, de.summaryMetadata[0].summaryMetadataReports[0].reportValue
+            }
+        }
     }
 }
