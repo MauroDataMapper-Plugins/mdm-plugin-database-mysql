@@ -17,6 +17,8 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql
 
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvider
+
 import grails.util.Pair
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
@@ -36,6 +38,8 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.Summary
 import uk.ac.ox.softeng.maurodatamapper.security.User
 import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
+import org.springframework.beans.factory.annotation.Autowired
+
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.SQLException
@@ -45,6 +49,9 @@ import java.time.format.DateTimeFormatter
 class MySqlDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<MySqlDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {
+
+    @Autowired
+    MySqlDataTypeProvider mySqlDataTypeProvider
 
     @Override
     String getDisplayName() {
@@ -70,6 +77,11 @@ class MySqlDatabaseDataModelImporterProviderService
     @Override
     Boolean allowsExtraMetadataKeys() {
         true
+    }
+
+    @Override
+    DefaultDataTypeProvider getDefaultDataTypeProvider() {
+        mySqlDataTypeProvider
     }
 
     @Override
