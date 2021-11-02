@@ -25,6 +25,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
 
 import groovy.json.JsonSlurper
+import groovy.util.logging.Slf4j
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -35,6 +36,7 @@ import static org.junit.Assert.assertNull
 import static org.junit.Assert.assertTrue
 
 // @CompileStatic
+@Slf4j
 class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePluginTest<MySqlDatabaseDataModelImporterProviderServiceParameters,
     MySqlDatabaseDataModelImporterProviderService> {
 
@@ -63,9 +65,14 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
             createDatabaseImportParameters(databaseHost, databasePort)
                 .tap {databaseNames = 'metadata_simple'}
         )
+
+        List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
+        assertEquals 'Default DT Provider', 34, defaultDataTypeLabels.size()
+        log.warn '{}', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}
         assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
-        assertEquals 'Number of columntypes/datatypes', 15, dataModel.dataTypes?.size()
-        assertEquals 'Number of primitive types', 14, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
+        assertEquals 'Number of columntypes/datatypes', 35, dataModel.dataTypes?.size()
+        assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
+        assertEquals 'Number of primitive types', 34, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 1, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
         assertEquals 'Number of tables/dataclasses', 5, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 5, dataModel.childDataClasses?.size()
@@ -135,9 +142,14 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
                             maxEnumerations = 20
                         }
         )
+
+        List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
+        assertEquals 'Default DT Provider', 34, defaultDataTypeLabels.size()
+
         assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
-        assertEquals 'Number of columntypes/datatypes', 17, dataModel.dataTypes?.size()
-        assertEquals 'Number of primitive types', 13, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
+        assertEquals 'Number of columntypes/datatypes', 38, dataModel.dataTypes?.size()
+        assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
+        assertEquals 'Number of primitive types', 34, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 1, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
         assertEquals 'Number of enumeration types', 3, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
         assertEquals 'Number of tables/dataclasses', 5, dataModel.dataClasses?.size()
