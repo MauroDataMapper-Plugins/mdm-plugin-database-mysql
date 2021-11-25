@@ -236,7 +236,11 @@ class MySqlDatabaseDataModelImporterProviderService
                                         description = "Estimated Enumeration Value Distribution (calculated by sampling ${samplingStrategy.percentage}% of rows)"
                                     }
                                     SummaryMetadata enumerationSummaryMetadata = SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, description, enumerationValueDistribution)
-                                    de.addToSummaryMetadata(enumerationSummaryMetadata);
+                                    de.addToSummaryMetadata(enumerationSummaryMetadata)
+
+                                    SummaryMetadata enumerationSummaryMetadataOnTable =
+                                            SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, description, enumerationValueDistribution)
+                                    tableClass.addToSummaryMetadata(enumerationSummaryMetadataOnTable)
                                 }
                             }
                         }
@@ -251,12 +255,15 @@ class MySqlDatabaseDataModelImporterProviderService
 
                                 Map<String, Long> valueDistribution = getColumnRangeDistribution(connection, samplingStrategy, dt, intervalHelper, de.label, tableClass.label)
                                 if (valueDistribution) {
-                                    String description = 'Value Distribution';
+                                    String description = 'Value Distribution'
                                     if (samplingStrategy.useSampling()) {
                                         description = "Estimated Value Distribution (calculated by sampling ${samplingStrategy.percentage}% of rows)"
                                     }
                                     SummaryMetadata summaryMetadata = SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, description, valueDistribution)
-                                    de.addToSummaryMetadata(summaryMetadata);
+                                    de.addToSummaryMetadata(summaryMetadata)
+
+                                    SummaryMetadata summaryMetadataOnTable = SummaryMetadataHelper.createSummaryMetadataFromMap(user, de.label, description, valueDistribution)
+                                    tableClass.addToSummaryMetadata(summaryMetadataOnTable)
                                 }
                             }
                         }
