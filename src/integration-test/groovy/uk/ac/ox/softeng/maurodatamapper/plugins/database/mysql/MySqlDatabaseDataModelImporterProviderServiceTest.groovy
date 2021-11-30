@@ -349,5 +349,16 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
                 assertEquals "Value of summary metadatdata for ${columnName}", expectedReportValue, de.summaryMetadata[0].summaryMetadataReports[0].reportValue
             }
         }
+
+        //All data element summary metadata should also have been added to the data class
+        organisationTable.dataElements.each {dataElement ->
+            dataElement.summaryMetadata?.each {dataElementSummaryMetadata ->
+                assert 'dataElement summaryMetadata is also on the dataClass',
+                        organisationTable.summaryMetadata.find{organisationTableSummaryMetadata ->
+                    organisationTableSummaryMetadata.description == dataElementSummaryMetadata.description &&
+                    organisationTableSummaryMetadata.summaryMetadataReports[0].reportValue == dataElementSummaryMetadata.summaryMetadataReports[0].reportValue
+                }
+            }
+        }
     }
 }
