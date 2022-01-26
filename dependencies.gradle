@@ -6,9 +6,8 @@ dependencies {
     else implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-database', version: mdmPluginDatabaseVersion
 
     implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: groovyVersion
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
     implementation group: 'mysql', name: 'mysql-connector-java', version: mySqlConnectorVersion
+    implementation 'org.grails:grails-plugin-rest'
 
     testImplementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
 
