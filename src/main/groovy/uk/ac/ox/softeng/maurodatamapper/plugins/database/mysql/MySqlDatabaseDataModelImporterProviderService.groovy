@@ -45,7 +45,7 @@ import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.time.format.DateTimeFormatter
 
-// @CompileStatic
+// @implementationStatic
 class MySqlDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<MySqlDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {

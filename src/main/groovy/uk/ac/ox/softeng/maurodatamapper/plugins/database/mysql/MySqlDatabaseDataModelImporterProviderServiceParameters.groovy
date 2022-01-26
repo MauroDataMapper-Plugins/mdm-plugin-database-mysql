@@ -24,7 +24,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import groovy.util.logging.Slf4j
 
 @Slf4j
-// @CompileStatic
+// @implementationStatic
 class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<MysqlDataSource> {
 
     @Override

@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNull
 import static org.junit.Assert.assertNull
 import static org.junit.Assert.assertTrue
 
-// @CompileStatic
+// @implementationStatic
 @Slf4j
 class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePluginTest<MySqlDatabaseDataModelImporterProviderServiceParameters,
     MySqlDatabaseDataModelImporterProviderService> {

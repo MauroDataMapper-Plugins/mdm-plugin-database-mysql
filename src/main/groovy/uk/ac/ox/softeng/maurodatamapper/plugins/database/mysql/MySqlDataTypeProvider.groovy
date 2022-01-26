@@ -22,7 +22,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvider
 import uk.ac.ox.softeng.maurodatamapper.datamodel.rest.transport.DefaultDataType
 
-// @CompileStatic
+// @implementationStatic
 class MySqlDataTypeProvider implements DefaultDataTypeProvider {
 
     @Override
