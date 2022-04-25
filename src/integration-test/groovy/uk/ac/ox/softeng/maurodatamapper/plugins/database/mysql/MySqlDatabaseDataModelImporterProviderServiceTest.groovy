@@ -17,12 +17,11 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql
 
-import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
-import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql.parameters.MySqlDatabaseDataModelImporterProviderServiceParameters
 
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
@@ -31,14 +30,14 @@ import org.junit.Test
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertNull
 import static org.junit.Assert.assertTrue
 
 // @implementationStatic
 @Slf4j
 class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePluginTest<MySqlDatabaseDataModelImporterProviderServiceParameters,
     MySqlDatabaseDataModelImporterProviderService> {
+
+    MySqlDatabaseDataModelImporterProviderService mySqlDatabaseDataModelImporterProviderService
 
     @Override
     String getDatabasePortPropertyName() {
@@ -48,6 +47,11 @@ class MySqlDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePlug
     @Override
     int getDefaultDatabasePort() {
         3306
+    }
+
+    @Override
+    MySqlDatabaseDataModelImporterProviderService getImporterInstance() {
+        mySqlDatabaseDataModelImporterProviderService
     }
 
     @Override

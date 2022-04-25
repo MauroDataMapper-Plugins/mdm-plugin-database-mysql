@@ -23,7 +23,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvid
 import uk.ac.ox.softeng.maurodatamapper.datamodel.rest.transport.DefaultDataType
 
 // @implementationStatic
-class MySqlDataTypeProvider implements DefaultDataTypeProvider {
+class MySqlDataTypeProviderService implements DefaultDataTypeProvider {
 
     @Override
     String getDisplayName() {
