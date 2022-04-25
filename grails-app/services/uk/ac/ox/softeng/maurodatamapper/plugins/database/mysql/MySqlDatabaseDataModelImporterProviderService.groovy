@@ -84,7 +84,7 @@ class MySqlDatabaseDataModelImporterProviderService
 
     @Override
     SamplingStrategy createSamplingStrategy(String schema, String table, MySqlDatabaseDataModelImporterProviderServiceParameters parameters) {
-        new MySqlSamplingStrategy(schema, table, parameters)
+        new MySqlSamplingStrategy(schema, table)
     }
 
     @Override
