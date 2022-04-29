@@ -15,7 +15,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.mysql.parameters
 
 
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters
@@ -24,7 +24,6 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import groovy.util.logging.Slf4j
 
 @Slf4j
-// @implementationStatic
 class MySqlDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<MysqlDataSource> {
 
     @Override
