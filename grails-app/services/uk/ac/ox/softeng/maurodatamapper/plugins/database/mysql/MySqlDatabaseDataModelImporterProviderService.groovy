@@ -57,6 +57,11 @@ class MySqlDatabaseDataModelImporterProviderService
     }
 
     @Override
+    Boolean handlesContentType(String contentType) {
+        false
+    }
+
+    @Override
     Set<String> getKnownMetadataKeys() {
         ['character_maximum_length', 'character_octet_length', 'character_set_catalog', 'character_set_name', 'character_set_schema',
          'collation_catalog', 'collation_name', 'collation_schema', 'column_default', 'datetime_precision', 'domain_catalog', 'domain_name',
